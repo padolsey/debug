@@ -12,6 +12,8 @@
 
 (function(){
     
+    var STRICT = false;
+    
     // Load JSLINT, don't start until we've got it!
     var lint = document.createElement('script'),
         sInt = setInterval(function(){
@@ -76,7 +78,7 @@
                     run = true;
                 }
                 var li = style(document.createElement('li'), {
-                    padding: '4px 0',
+                    padding: '4px 0 10px 0',
                     fontWeight: '700',
                     fontFamily: '"Consolas","Lucida Console",Courier,mono',
                     fontSize: '15px'
@@ -87,14 +89,19 @@
                         background: 'white',
                         border: '1px solid black',
                         margin: '10px 10px 10px 30px',
-                        fontSize: '13px'
+                        fontSize: '13px',
+                        overflow: 'auto'
                     });
                     var evidence = error.evidence;
-                    pre.innerHTML = error.character ? (evidence.substring(0, error.character)
-                                  + '<span style="padding:5px;text-decoration:underline;background:pink;">' + evidence.charAt(error.character) + '</span>'
-                                  + evidence.substring(error.character + 1)) : error.evidence;
+                    pre.innerHTML = error.character && error.character < error.evidence.length ? ([
+                        evidence.substring(0, error.character),
+                         '<span style="padding:5px;background:pink;">',
+                         evidence.charAt(error.character),
+                         '</span>',
+                         evidence.substring(error.character + 1)
+                    ].join('')) : error.evidence;
                     // Replace leading/trailing whitespace
-                    pre.innerHTML = pre.innerHTML.replace(/^[^\S][^\S]*|[^\S][^\S]*$/g, '');
+                    pre.innerHTML = pre.innerHTML.replace(/^[^\S][^\S]*|[^\S][^\S]*$/g, '').replace(/(\n\r|\n)/g, '<br/>');
                     li.appendChild(pre);
                 }
                 li.innerHTML = text + li.innerHTML;
@@ -127,9 +134,9 @@
     function init() {
         
         var runLint = true,
-            STRICTMODE = true,
             uid = +(new Date()),
-            debugPatt = /:debug\((.+?)\)$/;
+            debugPatt = /:debug\((.+?)\)$/,
+            jsLintErrors = false;
     
         parseScripts(/:debug\((.+?)\)$/, function(src, scriptEl){
             
@@ -137,7 +144,7 @@
                 sid = '_' + (+new Date()),
                 lIndex = 0,
                 recovered = 0,
-                alteredSRC,
+                splitSRC,
                 scriptID = scriptEl.type.match(/:debug\((.+?)\)$/)[1] || 'NULL';
                 
             window[uid] = function(e) {
@@ -145,7 +152,8 @@
                     recovered++;
                 } else {
                     modal.add('ERROR (<small>SCRIPT "' +scriptID+ '", STATEMENT: ' + (recovered+1) + '</small>): ' + e.message, {
-                        evidence: alteredSRC[recovered]
+                        // Replace blank lines (replace(...))
+                        evidence: splitSRC[recovered].replace(/[\n\r]\s+(?=[\n\r])/, '')//.replace(/^.+?\{(?=(.|[\n\r])+)/,'')
                     });
                 }
             };
@@ -155,8 +163,8 @@
             if (runLint) {
                 JSLINT(src);
                 for (var error in JSLINT.errors) {
-                    var hasErrors = true,
-                        thisError = JSLINT.errors[error];
+                    jsLintErrors = true;
+                    var thisError = JSLINT.errors[error];
                     if (thisError) {
                         modal.add([
                             '<a style="color:black;" href="http://jslint.com/" target="_blank">JSLINT</a> (<small>SCRIPT "',
@@ -172,10 +180,10 @@
                 }
             }
             
-            // Remove ALL comments
-            src = STRICTMODE ? removeComments(src) : src.replace(/\/\*.+?\*\/|\/\/.+?(?=[\n\r])/g, '');
+            if (jsLintErrors) { return ''; }
             
-            console.log(src);
+            // Remove ALL comments
+            src = STRICT ? removeComments(src, true) : src.replace(/\/\*.+?\*\/|\/\/.+?(?=[\n\r])/g, '');
         
             // Replace strings, Replace each end-of-line with window.uid call.
             src = src
@@ -192,7 +200,7 @@
                     return strings.shift();    
                 });
                 
-            alteredSRC = src.split(RegExp(';window\\[' + uid + '\\]\\(\\d+\\);'));
+            splitSRC = src.split(RegExp(';window\\[' + uid + '\\]\\(\\d+\\);'));
             
             return 'try { ' + src + '}catch(e){ window[' + uid + '](e); }';
                 
@@ -237,20 +245,21 @@
         
     }
         
-    function removeComments(str) {
+    function removeComments(str, removeCondComp) {
         // The only way to reliably remove comments:
         // (No regular expressions!)
-        str = str.split('');
+        str = ('__' + str + '__').split('');
         var mode = {
             sQuote: false,
             dQuote: false,
             regex: false,
             blockComment: false,
-            lineComment: false
+            lineComment: false,
+            condComp: false 
         };
         for (var i = 0, l = str.length; i < l; i++) {
             
-            if (!mode.blockComment && !mode.lineComment && !mode.regex) {
+            if (!mode.blockComment && !mode.lineComment && !mode.regex && !mode.condComp) {
                 if (str[i] === '\'') {
                     if (mode.sQuote && str[i-1] !== '\\') {
                         mode.sQuote = false;
@@ -272,6 +281,10 @@
         
             if (!mode.sQuote && !mode.dQuote) {
                 if (str[i] === '/') {
+                    if (!removeCondComp && str[i+1] + str[i+2] === '*@') {
+                        mode.condComp = true;
+                        continue;
+                    }
                     if (str[i+1] === '*') {
                         str[i] = '';
                         mode.blockComment = true;
@@ -285,6 +298,13 @@
                     mode.regex = str[i-1] !== '\\';
                 }
                 
+            }
+            
+            if (!removeCondComp && mode.condComp) {
+                if (str[i-2] + str[i-1] + str[i] === '@*/') {
+                    mode.condComp = false;
+                    continue;
+                }
             }
         
             if (mode.blockComment) {
@@ -305,7 +325,7 @@
             }
         
         }
-        return str.join('');
+        return str.join('').substring(2, str.length-2);
     }
     
 })();
