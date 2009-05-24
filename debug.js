@@ -250,8 +250,8 @@
         // (No regular expressions!)
         str = ('__' + str + '__').split('');
         var mode = {
-            sQuote: false,
-            dQuote: false,
+            singleQuote: false,
+            doubleQuote: false,
             regex: false,
             blockComment: false,
             lineComment: false,
@@ -261,25 +261,25 @@
             
             if (!mode.blockComment && !mode.lineComment && !mode.regex && !mode.condComp) {
                 if (str[i] === '\'') {
-                    if (mode.sQuote && str[i-1] !== '\\') {
-                        mode.sQuote = false;
+                    if (mode.singleQuote && str[i-1] !== '\\') {
+                        mode.singleQuote = false;
                         continue;
                     }
-                    mode.sQuote = true;
+                    mode.singleQuote = true;
                     continue;
                 }
         
                 if (str[i] === '"') {
-                    if (mode.dQuote && str[i-1] !== '\\') {
-                        mode.dQuote = false;
+                    if (mode.doubleQuote && str[i-1] !== '\\') {
+                        mode.doubleQuote = false;
                         continue;
                     }
-                    mode.dQuote = true;
+                    mode.doubleQuote = true;
                     continue;
                 }
             }
         
-            if (!mode.sQuote && !mode.dQuote) {
+            if (!mode.singleQuote && !mode.doubleQuote) {
                 if (str[i] === '/') {
                     if (!removeCondComp && str[i+1] + str[i+2] === '*@') {
                         mode.condComp = true;
@@ -308,7 +308,7 @@
             }
         
             if (mode.blockComment) {
-                if (str[i] === '*' && str[i+1] === '/') {
+                if (str[i] + str[i+1] === '*/') {
                     str[i] = str[i+1] = '';
                     mode.blockComment = false;
                     continue;
@@ -325,7 +325,7 @@
             }
         
         }
-        return str.join('').substring(2, str.length-2);
+        return str.join('').slice(2, -2);
     }
     
 })();
