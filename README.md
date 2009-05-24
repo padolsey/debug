@@ -9,7 +9,10 @@ It uses [JSLINT](http://jslint.com) (By Crockford) to report runtime errors and 
 
 The targetted JavaScript code will only be allowed to run once JSLINT has been passed; once this happens the "runtime" errors (if any) will be displayed.
 
+Preview:
 ---
+
+![debug.js preview](http://img194.imageshack.us/img194/2536/20090524175942.png)
 
 Usage:
 ---
