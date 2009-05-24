@@ -12,7 +12,7 @@
 
 (function(){
     
-    var STRICT = false;
+    var strictCommenting = true;
     
     // Load JSLINT, don't start until we've got it!
     var lint = document.createElement('script'),
@@ -183,7 +183,7 @@
             if (jsLintErrors) { return ''; }
             
             // Remove ALL comments
-            src = STRICT ? removeComments(src, true) : src.replace(/\/\*.+?\*\/|\/\/.+?(?=[\n\r])/g, '');
+            src = strictCommenting ? removeComments(src, true) : src.replace(/\/\*.+?\*\/|\/\/.+?(?=[\n\r])/g, '');
         
             // Replace strings, Replace each end-of-line with window.uid call.
             src = src
@@ -246,8 +246,6 @@
     }
         
     function removeComments(str, removeCondComp) {
-        // The only way to reliably remove comments:
-        // (No regular expressions!)
         str = ('__' + str + '__').split('');
         var mode = {
             singleQuote: false,
@@ -259,69 +257,72 @@
         };
         for (var i = 0, l = str.length; i < l; i++) {
             
-            if (!mode.blockComment && !mode.lineComment && !mode.regex && !mode.condComp) {
-                if (str[i] === '\'') {
-                    if (mode.singleQuote && str[i-1] !== '\\') {
-                        mode.singleQuote = false;
-                        continue;
-                    }
-                    mode.singleQuote = true;
-                    continue;
+            if (mode.regex) {
+                if (str[i] === '/' && str[i-1] !== '\\') {
+                    mode.regex = false;
                 }
-        
-                if (str[i] === '"') {
-                    if (mode.doubleQuote && str[i-1] !== '\\') {
-                        mode.doubleQuote = false;
-                        continue;
-                    }
-                    mode.doubleQuote = true;
-                    continue;
-                }
-            }
-        
-            if (!mode.singleQuote && !mode.doubleQuote) {
-                if (str[i] === '/') {
-                    if (!removeCondComp && str[i+1] + str[i+2] === '*@') {
-                        mode.condComp = true;
-                        continue;
-                    }
-                    if (str[i+1] === '*') {
-                        str[i] = '';
-                        mode.blockComment = true;
-                        continue;
-                    }
-                    if (str[i+1] === '/') {
-                        str[i] = str[i+1] = '';
-                        mode.lineComment= true;
-                        continue;
-                    }
-                    mode.regex = str[i-1] !== '\\';
-                }
-                
+                continue;
             }
             
-            if (!removeCondComp && mode.condComp) {
-                if (str[i-2] + str[i-1] + str[i] === '@*/') {
-                    mode.condComp = false;
-                    continue;
+            if (mode.singleQuote) {
+                if (str[i] === "'" && str[i-1] !== '\\') {
+                    mode.singleQuote = false;
                 }
+                continue;
             }
-        
+            
+            if (mode.doubleQuote) {
+                if (str[i] === '"' && str[i-1] !== '\\') {
+                    mode.doubleQuote = false;
+                }
+                continue;
+            }
+            
             if (mode.blockComment) {
-                if (str[i] + str[i+1] === '*/') {
-                    str[i] = str[i+1] = '';
+                if (str[i] === '*' && str[i+1] === '/') {
+                    str[i+1] = '';
                     mode.blockComment = false;
-                    continue;
                 }
                 str[i] = '';
+                continue;
             }
-        
+            
             if (mode.lineComment) {
-                if (str[i] === '\n' || str[i] === '\r') {
+                if (str[i+1] === '\n' || str[i+1] === '\r') {
                     mode.lineComment = false;
-                    continue;
                 }
                 str[i] = '';
+                continue;
+            }
+            
+            if (mode.condComp) {
+                if (str[i-2] === '@' && str[i-1] === '*' && str[i] === '/') {
+                    mode.condComp = false;
+                }
+                continue;
+            }
+            
+            mode.doubleQuote = str[i] === '"';
+            mode.singleQuote = str[i] === "'";
+            
+            if (str[i] === '/') {
+                
+                if (str[i+1] === '*' && str[i+2] === '@') {
+                    mode.condComp = true;
+                    continue;
+                }
+                if (str[i+1] === '*') {
+                    str[i] = '';
+                    mode.blockComment = true;
+                    continue;
+                }
+                if (str[i+1] === '/') {
+                    str[i] = '';
+                    mode.lineComment = true;
+                    continue;
+                }
+                mode.regex = true;
+                
             }
         
         }
