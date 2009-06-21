@@ -8,6 +8,10 @@
     Read README.txt for instructions
     
     v 0.2
+    
+    Contributors {
+        David Walker
+    }
  
 */
 
@@ -174,17 +178,19 @@
     })();
     
     /* Load JSLINT, don't start until we've got it! */
-    var lint = document.createElement('script'),
-        lintSrc = 'http://www.jslint.com/fulljslint.js';
-        sInt = setInterval(function(){
-            if (window.JSLINT && extSources.complete) {
-                clearInterval(sInt);
-                init();
-            }
-        }, 100);
-        
-    lint.src = lintSrc;
-    document.body.appendChild(lint);
+    var jsLintWaiter = setInterval(function(){
+        if (window.JSLINT && extSources.complete) {
+            clearInterval(jsLintWaiter);
+            init();
+        }
+    }, 100);
+    
+    if (!window.JSLINT) {
+        var lint = document.createElement('script'),
+            lintSrc = 'http://www.jslint.com/fulljslint.js';
+        lint.src = lintSrc;
+        document.body.appendChild(lint);
+    }
     
     /* Overlaying document; where the errors are displayed. */
     var modal = (function(){

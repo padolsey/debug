@@ -5,7 +5,7 @@ debug.js
 
 *debug.js* is an in-browser JavaScript error-reporter.
 
- * Runs your JavaScript through JSLint and shows any emerging errors.
+ * Runs your JavaScript through [JSLint](http://jslint.com] and shows any emerging errors.
  * Runs your JavaScript through the browser and provides feedback on runtime errors.
  
 *debug.js* is not really a debugger but of great aid in the debugging process. It's not meant as a replacement for current debugging tools (such as Firebug) but more as another tool you can use to ensure that your JavaScript is "up to the mark".
