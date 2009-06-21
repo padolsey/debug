@@ -48,4 +48,29 @@ Example:
 
 **Output produced from the above source**:
 
-![debug.js preview](http://img44.imageshack.us/img44/1272/debug.png)
+![debug.js preview](http://img20.imageshack.us/img20/9337/debugz.png)
+
+Tips:
+---
+
+To skip a SCRIPT, simple preceed it with a comment containing just the word "skip":
+
+    <!--skip-->
+    <script>...</script>
+    
+To only skip the JSLint portion of the test preceed your SCRIPT with the following comment:
+
+    <!--skiplint-->
+    <script>...</script>
+    
+To give your SCRIPTS IDs, preceed them with comments like these: (note, don't use "skip" or "skiplint" as IDs!)
+
+    <!--foo bar-->
+    <script>...</script>
+    
+    <!--wowza-->
+    <script>...</script>
+    
+(A script's ID appears alongside its report - an especially useful feature if you have many...)
+    
+*debug.js* works with externally hosted JavaScript files too. The only type of file it cannot reach is one stored locally on a seperate domain to the document. For example: the documents URL is *http://127.0.0.1/something.html* and the script is located at *http://localhost/script.js* - *debug.js* won't be able to reach this...
