@@ -5,14 +5,12 @@ debug.js
 
 *debug.js* is an in-browser JavaScript error-reporter.
 
-It uses [JSLINT](http://jslint.com) (By Crockford) to report runtime errors and relies on native browser error handling for "runtime" errors. These "runtime" errors are shown in a similar fashion to the validation errors (JSLINT).
+ * Runs your JavaScript through JSLint and shows any emerging errors.
+ * Runs your JavaScript through the browser and provides feedback on runtime errors.
+ 
+*debug.js* is not really a debugger but of great aid in the debugging process. It's not meant as a replacement for current debugging tools (such as Firebug) but more as another tool you can use to ensure that your JavaScript is "up to the mark".
 
-The targetted JavaScript code will only be allowed to run once JSLINT has been passed; once this happens the "runtime" errors (if any) will be displayed.
-
-Preview:
----
-
-![debug.js preview](http://img194.imageshack.us/img194/2536/20090524175942.png)
+**Note: This is still in development; bugs expected!**
 
 Usage:
 ---
@@ -22,31 +20,32 @@ the bottom:
 
     <script src="debug.js"></script>
 
-Using it requires you to change the type of target SCRIPT
-elements.
+If no errors (syntax or runtime) exist then you won't see anything. If errors do exist then an overlay should appear which details the errors encountered.
 
-Note: *debug.js* will not work with externally hosted JavaScript files (hosted on a separate domain)
+Example:
+---
 
-###Exmaple (code within &lt;script/&gt;)
+    <html>
+        <head>
+            <title>DEBUG DEMO</title>
+        </head>
+        <body>
+            
+            <!--JSLint Example-->
+            <script>
+                var regex = /ProblemWithThisRegex[123-]/
+            </script>
+            
+            <!--RuntimeError Example-->
+            <script>
+                var something = nonExistingObject.property;
+            </script>
+            
+            <script src="debug.js"></script>
+            
+        </body>
+    </html>
 
-    <script type="text/javascript:debug(name)">
-    // ... your script
-    <script>
+**Output produced from the above source**:
 
-###Exmaple (&lt;script/&gt; with SRC attribute)
-    
-    <script src="myfile.js" type="text/javascript:debug(name)">
-    </script>
-    
-Simply add ":debug(name)" to the end of your TYPE attributes; the "name" should be descriptive, e.g.
-
-    <script type=":debug(mainExec)">
-    // .. mainExec function here...
-    </script>
-
-Notice that ":debug()" can be used as a type on its own; you don't have to prefix it with "text/javascript".
-    
-*debug.js* does not rely on or make use of browser plugins such as firebug.
-
-*debug.js* is mostly intended for debugging outside of capable error-reporting browsers. IE development, for example, will massively benefit from debeg.js
-
+![debug.js preview](http://img44.imageshack.us/img44/1272/debug.png)
